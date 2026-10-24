@@ -35,13 +35,12 @@
 		]
 	},
 	"mixins": [
-		"mtrscripting.mixins.json",
 		"jsblock.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.0",
 		"minecraft": "~${minecraft_version}",
-		"mtr": ">=4.0.5 <4.1",
+		"mtr": ">=4.0.5 <4.2",
 		"fabric": "*"
 	},
 	"custom": {

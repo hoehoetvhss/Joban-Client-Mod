@@ -7,9 +7,6 @@ import com.lx862.amberui.gui.screen.TitledScreen;
 import com.lx862.amberui.gui.widget.ListViewWidget;
 import com.lx862.amberui.gui.widget.MappedWidget;
 import com.lx862.amberui.gui.widget.WidgetSet;
-import com.lx862.jcm.mod.scripting.JCMScripting;
-import com.lx862.mtrscripting.mod.gui.screen.ScriptRestrictionWarningScreen;
-import com.lx862.mtrscripting.mod.impl.mtr.MTRContentScripting;
 import com.lx862.jcm.mod.util.JCMLogger;
 import com.lx862.jcm.mod.util.TextCategory;
 import com.lx862.jcm.mod.util.TextUtil;
@@ -49,7 +46,6 @@ public class ClientConfigScreen extends TitledScreen implements GuiHelper {
 
     private boolean discardConfig = false;
 
-
     public ClientConfigScreen() {
         super(true);
         bottomRowWidget = new WidgetSet(20);
@@ -62,11 +58,7 @@ public class ClientConfigScreen extends TitledScreen implements GuiHelper {
         this.debugModeButton = checkboxForConfig(JCMClientConfig.INSTANCE.debugMode);
         this.disableScriptingButton = checkboxForConfig(JCMClientConfig.INSTANCE.scripting.skipScriptParsing);
         this.disableScriptingClassRestrictionButton = checkboxForConfig(JCMClientConfig.INSTANCE.scripting.disableScriptRestrictions, (bool, trackedValue) -> {
-            if(bool) {
-                MinecraftClient.getInstance().openScreen(new Screen(new ScriptRestrictionWarningScreen(() -> trackedValue.setOverride(true)).withPreviousScreen(new Screen(this))));
-            } else {
-                JCMClientConfig.INSTANCE.scripting.disableScriptRestrictions.setOverride(false);
-            }
+            trackedValue.setOverride(bool);
         });
 
         this.scriptDebugModeButton = checkboxForConfig(JCMClientConfig.INSTANCE.scripting.scriptDebugMode);
@@ -149,7 +141,6 @@ public class ClientConfigScreen extends TitledScreen implements GuiHelper {
         listViewWidget.add(TextUtil.translatable(TextCategory.GUI, "config.listview.title.script_show_log_source"), new MappedWidget(scriptShowLogSourceButton));
     }
 
-
     private void addBottomButtons(WidgetSet bottomRowWidget) {
         ButtonWidgetExtension latestLogButton = new ButtonWidgetExtension(0, 0, 0, 20, TextUtil.translatable(TextCategory.GUI, "config.latest_log"), (btn) -> {
             openLatestLog();
@@ -215,18 +206,13 @@ public class ClientConfigScreen extends TitledScreen implements GuiHelper {
     public void onClose2() {
         if(!closing) {
             if (!discardConfig) {
-                // Apply and clear all overriden value (Pending changes)
                 for(TrackedValue value : JCMClientConfig.INSTANCE.values()) {
                     if(value.isBeingOverridden()) {
                         value.setValue(value.value());
                         value.removeOverride();
                     }
                 }
-
-                JCMScripting.getScriptManager().getClassShutter().setEnabled(!JCMClientConfig.INSTANCE.scripting.disableScriptRestrictions.value());
-                MTRContentScripting.getScriptManager().getClassShutter().setEnabled(!JCMClientConfig.INSTANCE.scripting.disableScriptRestrictions.value());
             } else {
-                // Discard all overriden values (pending changes)
                 for(TrackedValue value : JCMClientConfig.INSTANCE.values()) {
                     if(value.isBeingOverridden()) {
                         value.removeOverride();

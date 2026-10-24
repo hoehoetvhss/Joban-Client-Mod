@@ -63,7 +63,6 @@ public class ItemDRLAPG extends ItemExtension implements IBlock {
         return ActionResult.SUCCESS;
     }
 
-    @Override
     public void addTooltips(ItemStack stack, @Nullable World world, List<MutableText> tooltip, TooltipContext options) {
         tooltip.add(TextHelper.translatable(type.isLift ? type.isOdd ? "tooltip.mtr.railway_sign_odd" : "tooltip.mtr.railway_sign_even" : "tooltip.mtr." + item.asString2()).formatted(TextFormatting.GRAY));
     }

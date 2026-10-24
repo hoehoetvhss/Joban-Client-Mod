@@ -6,11 +6,9 @@ import com.google.gson.JsonParser;
 import com.lx862.jcm.mod.Constants;
 import com.lx862.jcm.mod.JCMClient;
 import com.lx862.jcm.mod.data.pids.PIDSManager;
-import com.lx862.jcm.mod.scripting.JCMScripting;
 import com.lx862.jcm.mod.util.JCMLogger;
 import org.apache.commons.io.IOUtils;
 import org.mtr.mapping.holder.Identifier;
-import org.mtr.mapping.holder.MinecraftClient;
 import org.mtr.mapping.mapper.ResourceManagerHelper;
 import org.mtr.mod.client.CustomResourceLoader;
 
@@ -25,8 +23,6 @@ public class JCMResourceManager {
     }
 
     private static void loadCustomResources() {
-        JCMScripting.getScriptManager().scriptErrorNotifier.reset();
-
         CustomResourceLoader.OPTIMIZED_RENDERER_WRAPPER.beginReload();
         ResourceManagerHelper.readAllResources(CUSTOM_RESOURCE_PATH, (inputStream -> {
             try {
@@ -39,9 +35,5 @@ public class JCMResourceManager {
         }));
         ComplexModelStorage.beginReload();
         CustomResourceLoader.OPTIMIZED_RENDERER_WRAPPER.finishReload();
-
-        if(MinecraftClient.getInstance().getPlayerMapped() != null) {
-            JCMScripting.getScriptManager().scriptErrorNotifier.flush();
-        }
     }
 }

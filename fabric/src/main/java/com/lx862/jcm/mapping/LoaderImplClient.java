@@ -1,7 +1,7 @@
 package com.lx862.jcm.mapping;
 
 import com.lx862.jcm.mixin.mtrpatch.WorldRendererAccessor;
-import com.lx862.jcm.mixin.mtrscripting.NativeImageAccessor;
+import com.lx862.jcm.mixin.NativeImageAccessor;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;

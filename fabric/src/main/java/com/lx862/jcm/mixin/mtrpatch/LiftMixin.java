@@ -9,7 +9,7 @@ import org.mtr.core.generated.data.LiftSchema;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.SoundHelper;
 import org.mtr.mod.Init;
-import org.mtr.mod.block.BlockLiftTrackFloor;
+import org.mtr.block.BlockLiftTrackFloor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -40,8 +40,8 @@ public abstract class LiftMixin extends LiftSchema {
 
             if(mcWorld != null && mcPlayer != null) {
                 BlockEntity be = mcWorld.getBlockEntity(pos);
-                if(be != null && be.data instanceof BlockLiftTrackFloor.BlockEntity) {
-                    BlockLiftTrackFloor.BlockEntity floorBE = (BlockLiftTrackFloor.BlockEntity)be.data;
+                if(be != null && be.data instanceof BlockLiftTrackFloor.LiftTrackFloorBlockEntity) {
+                    BlockLiftTrackFloor.LiftTrackFloorBlockEntity floorBE = (BlockLiftTrackFloor.LiftTrackFloorBlockEntity)be.data;
                     if(floorBE.getShouldDing()) {
                         mcWorld.playSound(PlayerEntity.cast(mcPlayer), pos, SoundHelper.createSoundEvent(JCMPatchForMTR.LIFT_DING_SOUND), SoundCategory.BLOCKS, 1, 2);
                     }

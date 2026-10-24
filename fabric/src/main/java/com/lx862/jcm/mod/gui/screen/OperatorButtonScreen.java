@@ -10,6 +10,7 @@ import com.lx862.amberui.gui.widget.WidgetSet;
 import com.lx862.jcm.mod.util.TextCategory;
 import com.lx862.jcm.mod.util.TextUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
+import org.mtr.item.ItemDriverKey;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.ButtonWidgetExtension;
 import org.mtr.mapping.mapper.GraphicsHolder;
@@ -17,7 +18,6 @@ import org.mtr.mapping.mapper.GuiDrawing;
 import org.mtr.mapping.mapper.TextHelper;
 import org.mtr.mapping.tool.ColorHelper;
 import org.mtr.mod.data.IGui;
-import org.mtr.mod.item.ItemDriverKey;
 
 import java.util.function.Consumer;
 
@@ -72,7 +72,7 @@ public class OperatorButtonScreen extends BlockConfigScreen {
 
         if(hoveredButton != null) {
             ItemDriverKey key = hoveredButton.getKeyItem();
-            MutableText itemText = TextUtil.translatable(key.getTranslationKey2());
+            MutableText itemText = TextUtil.translatable(key.getTranslationKey());
             MutableText prefixTick = TextUtil.literal("✔ ").formatted(TextFormatting.DARK_GREEN);
             MutableText prefixCross = TextUtil.literal("✗ ").formatted(TextFormatting.DARK_RED);
 

@@ -7,6 +7,8 @@ import com.lx862.jcm.mod.network.gui.OperatorButtonGUIPacket;
 import com.lx862.jcm.mod.registry.Networking;
 import com.lx862.jcm.mod.util.TextCategory;
 import com.lx862.jcm.mod.util.TextUtil;
+import org.mtr.item.ItemDepotDriverKey;
+import org.mtr.item.ItemDriverKey;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
 import org.mtr.mapping.mapper.BlockWithEntity;
@@ -14,8 +16,6 @@ import org.mtr.mapping.registry.ItemRegistryObject;
 import org.mtr.mapping.tool.HolderBase;
 import org.mtr.mod.Items;
 import org.mtr.mod.block.IBlock;
-import org.mtr.mod.item.ItemDepotDriverKey;
-import org.mtr.mod.item.ItemDriverKey;
 
 import java.util.List;
 
@@ -86,7 +86,6 @@ public class OperatorButtonBlock extends WallAttachedBlock implements BlockWithE
         super.addBlockProperties(properties);
         properties.add(POWERED);
     }
-
 
     @Override
     public boolean emitsRedstonePower2(BlockState state) {

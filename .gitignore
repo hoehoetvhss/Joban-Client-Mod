@@ -28,6 +28,10 @@ bin/
 
 *.DS_Store
 
+# build / temp
+libs/
+legacy_1204_code/
+
 # fabric
 
 fabric/run/

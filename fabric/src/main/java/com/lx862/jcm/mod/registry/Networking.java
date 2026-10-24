@@ -1,23 +1,49 @@
 package com.lx862.jcm.mod.registry;
 
+import com.lx862.jcm.mod.network.JCMPacketPayload;
 import com.lx862.jcm.mod.network.block.*;
 import com.lx862.jcm.mod.network.gui.*;
 import com.lx862.jcm.mod.util.JCMLogger;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import org.mtr.mapping.holder.MinecraftServer;
 import org.mtr.mapping.holder.PlayerEntity;
 import org.mtr.mapping.holder.ServerPlayerEntity;
 import org.mtr.mapping.registry.PacketHandler;
 import org.mtr.mapping.tool.PacketBufferReceiver;
+import org.mtr.mapping.tool.PacketBufferSender;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class Networking {
     private static final List<String> registeredPackets = new ArrayList<>();
+    private static final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> PACKETS = new HashMap<>();
 
     public static void register() {
         JCMLogger.debug("Registering network packets...");
-        JCMRegistry.setupPacket();
+        PayloadTypeRegistry.playC2S().register(JCMPacketPayload.ID, JCMPacketPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(JCMPacketPayload.ID, JCMPacketPayload.CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(JCMPacketPayload.ID, (payload, context) -> {
+            net.minecraft.server.network.ServerPlayerEntity player = context.player();
+            net.minecraft.server.MinecraftServer server = context.server();
+            server.execute(() -> {
+                PacketBufferReceiver.receive(Unpooled.wrappedBuffer(payload.data()), packetBufferReceiver -> {
+                    String className = packetBufferReceiver.readString();
+                    Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = PACKETS.get(className);
+                    if (getInstance != null) {
+                        PacketHandler packet = getInstance.apply(packetBufferReceiver);
+                        packet.runServer(new MinecraftServer(server), new ServerPlayerEntity(player));
+                    }
+                }, runnable -> server.execute(runnable));
+            });
+        });
 
         // Block Entity Update
         registerPacket(ButterflyLightUpdatePacket.class, ButterflyLightUpdatePacket::new);
@@ -40,14 +66,24 @@ public class Networking {
     }
 
     public static void registerClient() {
-        JCMRegistryClient.setupPacketClient();
+        ClientPlayNetworking.registerGlobalReceiver(JCMPacketPayload.ID, (payload, context) -> {
+            net.minecraft.client.MinecraftClient client = context.client();
+            client.execute(() -> {
+                PacketBufferReceiver.receive(Unpooled.wrappedBuffer(payload.data()), packetBufferReceiver -> {
+                    String className = packetBufferReceiver.readString();
+                    Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = PACKETS.get(className);
+                    if (getInstance != null) {
+                        PacketHandler packet = getInstance.apply(packetBufferReceiver);
+                        packet.runClient();
+                    }
+                }, runnable -> client.execute(runnable));
+            });
+        });
     }
 
     public static <T extends PacketHandler> void registerPacket(Class<T> classObject, Function<PacketBufferReceiver, T> getInstance) {
-        // Keep track of the registered packets, so we can warn if we try to send a non-registered packet
-        // I believe Minecraft Mapping itself already keeps track of the registered packets, it just doesn't warn
         registeredPackets.add(classObject.getName());
-        JCMRegistry.registerPacket(classObject, getInstance);
+        PACKETS.put(classObject.getName(), getInstance);
     }
 
     public static <T extends PacketHandler> void sendPacketToServer(T data) {
@@ -55,7 +91,14 @@ public class Networking {
             JCMLogger.warn("Non-registered packets is sent: " + data.getClass().getName());
             JCMLogger.warn("Consider registering in method: mod/registry/Networking.register()");
         }
-        JCMRegistryClient.REGISTRY_CLIENT.sendPacketToServer(data);
+        PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
+        packetBufferSender.writeString(data.getClass().getName());
+        data.write(packetBufferSender);
+        packetBufferSender.send(byteBuf -> {
+            byte[] bytes = new byte[byteBuf.readableBytes()];
+            byteBuf.readBytes(bytes);
+            ClientPlayNetworking.send(new JCMPacketPayload(bytes));
+        }, runnable -> net.minecraft.client.MinecraftClient.getInstance().execute(runnable));
     }
 
     public static <T extends PacketHandler> void sendPacketToClient(PlayerEntity player, T data) {
@@ -63,6 +106,14 @@ public class Networking {
             JCMLogger.warn("Non-registered packets is sent: " + data.getClass().getName());
             JCMLogger.warn("Consider registering in method: mod/registry/Networking.register()");
         }
-        JCMRegistry.REGISTRY.sendPacketToClient(ServerPlayerEntity.cast(player), data);
+        PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
+        packetBufferSender.writeString(data.getClass().getName());
+        data.write(packetBufferSender);
+        ServerPlayerEntity serverPlayer = ServerPlayerEntity.cast(player);
+        packetBufferSender.send(byteBuf -> {
+            byte[] bytes = new byte[byteBuf.readableBytes()];
+            byteBuf.readBytes(bytes);
+            ServerPlayNetworking.send(serverPlayer.data, new JCMPacketPayload(bytes));
+        }, runnable -> serverPlayer.data.server.execute(runnable));
     }
 }

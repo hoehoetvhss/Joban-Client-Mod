@@ -1,10 +1,8 @@
 package com.lx862.jcm.mod.data.pids;
 
 import com.google.gson.JsonObject;
-import com.lx862.jcm.mod.config.JCMClientConfig;
 import com.lx862.jcm.mod.data.pids.preset.JsonPIDSPreset;
 import com.lx862.jcm.mod.data.pids.preset.PIDSPresetBase;
-import com.lx862.jcm.mod.data.pids.preset.ScriptPIDSPreset;
 import com.lx862.jcm.mod.util.JCMLogger;
 
 import java.util.HashMap;
@@ -26,13 +24,9 @@ public class PIDSManager {
                 boolean isScriptPreset = jsonObject.has("scriptFiles") || jsonObject.has("scriptTexts");
                 PIDSPresetBase preset;
 
-                if(isScriptPreset && JCMClientConfig.INSTANCE.scripting.skipScriptParsing.value()) {
-                    JCMLogger.info("Not parsing scripted PIDS Preset {} as scripting is disabled.", presetId);
-                    return;
-                }
-
                 if(isScriptPreset) {
-                    preset = ScriptPIDSPreset.parse(jsonObject);
+                    JCMLogger.info("Scripted PIDS Preset {} is not supported on 1.21.1 yet, skipping.", presetId);
+                    return;
                 } else {
                     preset = JsonPIDSPreset.parse(e.getAsJsonObject());
                 }

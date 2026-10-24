@@ -1,15 +1,9 @@
 package com.lx862.jcm.mod.extra;
 
-import com.lx862.jcm.mixin.mtrpatch.OptimizedRendererAccessorMixin;
-import com.lx862.jcm.mixin.mtrpatch.OptimizedRendererWrapperAccessorMixin;
 import com.lx862.jcm.mod.config.JCMClientConfig;
-import com.lx862.mtrscripting.mod.impl.mtr.util.MTRWrapper;
 import it.unimi.dsi.fastutil.longs.Long2IntArrayMap;
 import org.mtr.mapping.holder.*;
-import org.mtr.mapping.mapper.OptimizedRenderer;
 import org.mtr.mapping.render.shader.ModShaderHandler;
-import org.mtr.mapping.render.shader.ShaderManager;
-import org.mtr.mod.client.CustomResourceLoader;
 import org.mtr.mod.resource.CustomResourceTools;
 
 import java.nio.file.FileSystems;
@@ -26,22 +20,15 @@ public class JCMPatchForMTR {
     public static boolean isSitting = false;
     public static boolean wasSneaking = false;
 
-    /**
-     * Reload optimized rendering shaders.<br>
-     * This was originally a part of {@link OptimizedRenderer#beginReload()}, however reloading shaders is quite heavy and memory intensive.<br>
-     * It should only be done once during resource reload, hence it has been moved here to increase model loading speed.
-     */
     public static void reloadOptimizedRenderingShader() {
-        OptimizedRenderer optimizedRenderer = ((OptimizedRendererWrapperAccessorMixin)(Object) CustomResourceLoader.OPTIMIZED_RENDERER_WRAPPER).getOptimizedRenderer();
-        ShaderManager shaderManager = ((OptimizedRendererAccessorMixin)(Object) optimizedRenderer).getShaderManager();
-        shaderManager.reloadShaders();
     }
 
     public static void tick() {
         if(MinecraftClient.getInstance().getPlayerMapped() != null) {
             if(JCMClientConfig.INSTANCE.mtrPatch.allowCameraLowering.value()) {
                 boolean isPlayerSneaking = MinecraftClient.getInstance().getPlayerMapped().isSneaking();
-                if(MTRWrapper.Data.getPlayerMountedVehicle() == null) {
+                boolean inVehicle = MinecraftClient.getInstance().getPlayerMapped().data.hasVehicle();
+                if(!inVehicle) {
                     JCMPatchForMTR.isSitting = false;
                 } else {
                     if(isPlayerSneaking && !JCMPatchForMTR.wasSneaking) {
@@ -53,33 +40,32 @@ public class JCMPatchForMTR {
         }
     }
 
-    /**
-     * Resolve from a relative path to an absolute path.<br>
-     * Unlike MTR's method, this can resolve path traversals like ../, which is used in NTE resource packs
-     * @param basePath The base identifier path
-     * @param resource The relative path
-     * @param extension The file extension
-     * @return An identifier with the absolute path.
-     */
     public static Identifier resolveRelativePath(String basePath, String resource, String extension) {
-        if (resource.contains(":")) { // Assume it is already an identifier
+        if (resource.contains(":")) {
             return CustomResourceTools.formatIdentifierWithDefault(resource, extension);
         } else {
             Identifier basePathId = new Identifier(basePath);
             String relative = resource.toLowerCase(Locale.ROOT).replace('\\', '/');
 
-            String resolvedPath = FileSystems.getDefault().getPath(basePathId.getPath()).getParent().resolve(relative)
-                    .normalize().toString().replace('\\', '/');
-            return CustomResourceTools.formatIdentifier(basePathId.getNamespace() + ":" + resolvedPath, extension);
+            String resolvedPath = FileSystems.getDefault().getPath(basePathId.getPath()).getParent().resolve(relative).toString().replace('\\', '/');
+            return new Identifier(basePathId.getNamespace(), resolvedPath);
         }
     }
 
-    public static void updateRenderingShadow() {
-        cachedRenderingShadow = ModShaderHandler.renderingShadows();
+    public static void setInstruction(long sidingId, int instruction) {
+        liftInstructions.put(sidingId, instruction);
     }
 
-    public static boolean isRenderingShadow() {
-        return cachedRenderingShadow;
+    public static int getInstruction(long sidingId) {
+        return liftInstructions.getOrDefault(sidingId, -1);
+    }
+
+    public static boolean hasInstruction(long sidingId) {
+        return liftInstructions.containsKey(sidingId);
+    }
+
+    public static void removeInstruction(long sidingId) {
+        liftInstructions.remove(sidingId);
     }
 
     public static boolean liftJustArrived(long liftId, int currentInstructionSize) {
@@ -89,21 +75,11 @@ public class JCMPatchForMTR {
         return liftJustArrived;
     }
 
-    public static boolean shouldSkipCullingTask(double lowX, double lowY, double lowZ, double highX, double highY, double highZ) {
-        // Exceeds max limit, not gonna bother checking
-        if(Math.max(0, highX - lowX) * Math.max(0, highY - lowY) * Math.max(0, highZ - lowZ) > RAIL_CULLING_AREA_LIMIT) {
-            return true;
-        }
-        return false;
+    public static void onPreRender() {
+        cachedRenderingShadow = ModShaderHandler.renderingShadows();
     }
 
-    public static Box clampBoundingBoxToRenderDistance(Vector3d pos, int renderDistance, double lowX, double lowY, double lowZ, double highX, double highY, double highZ) {
-        int blocksPerSide = (renderDistance * 16) + 1;
-        double clampLowX = pos.getXMapped() - blocksPerSide;
-        double clampLowZ = pos.getZMapped() - blocksPerSide;
-        double clampHighX = pos.getXMapped() + blocksPerSide;
-        double clampHighZ = pos.getZMapped() + blocksPerSide;
-
-        return new Box(Math.max(lowX, clampLowX), lowY, Math.max(lowZ, clampLowZ), Math.min(highX, clampHighX), highY, Math.min(highZ, clampHighZ));
+    public static boolean isRenderingShadow() {
+        return cachedRenderingShadow;
     }
 }

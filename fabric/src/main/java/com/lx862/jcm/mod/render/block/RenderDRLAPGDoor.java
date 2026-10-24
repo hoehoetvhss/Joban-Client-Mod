@@ -48,14 +48,14 @@ public class RenderDRLAPGDoor<T extends APGDoorDRLBlockEntity> extends BlockEnti
             graphicsHolderNew.rotateYDegrees(-facing.asRotation());
             graphicsHolderNew.rotateXDegrees(180);
         });
-        final StoredMatrixTransformations storedMatrixTransformationsLight = storedMatrixTransformations.copy();
 
         switch (type) {
             case 2:
-                if (half) {
-                    final Block block = world.getBlockState(blockPos.offset(side ? facing.rotateYClockwise() : facing.rotateYCounterclockwise())).getBlock();
+                if (half && end) {
+                    final StoredMatrixTransformations storedMatrixTransformationsLight = storedMatrixTransformations.copy();
+                    final Block block = world.getBlockState(blockPos.offset(facing.rotateYClockwise(), side ? 1 : -1)).getBlock();
                     if (block.data instanceof BlockAPGGlass || block.data instanceof BlockAPGGlassEnd) {
-                        MainRenderer.scheduleRender(new Identifier(String.format("mtr:textures/block/apg_door_light_%s.png", open > 0 ? "on" : "off")), false, open > 0 ? QueuedRenderLayer.LIGHT_TRANSLUCENT : QueuedRenderLayer.EXTERIOR, (graphicsHolderNew, offset) -> {
+                        MainRenderer.scheduleRender(new Identifier(Init.MOD_ID, "textures/block/apg_door_light.png"), false, QueuedRenderLayer.EXTERIOR, (graphicsHolderNew, offset) -> {
                             storedMatrixTransformationsLight.transform(graphicsHolderNew, offset);
                             graphicsHolderNew.translate(side ? -0.515625 : 0.515625, 0, 0);
                             graphicsHolderNew.scale(0.5F, 1, 1);
@@ -92,11 +92,6 @@ public class RenderDRLAPGDoor<T extends APGDoorDRLBlockEntity> extends BlockEnti
         }
     }
 
-    @Override
-    public boolean rendersOutsideBoundingBox2(T blockEntity) {
-        return true;
-    }
-
     private static class ModelSingleCube extends EntityModelExtension<EntityAbstractMapping> {
 
         private final ModelPartExtension cube;
@@ -111,6 +106,10 @@ public class RenderDRLAPGDoor<T extends APGDoorDRLBlockEntity> extends BlockEnti
         @Override
         public void render(GraphicsHolder graphicsHolder, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
             cube.render(graphicsHolder, 0, 0, 0, packedLight, packedOverlay);
+        }
+
+        @Override
+        public void render(net.minecraft.client.util.math.MatrixStack matrices, net.minecraft.client.render.VertexConsumer vertices, int light, int overlay, int color) {
         }
 
         @Override
@@ -143,6 +142,10 @@ public class RenderDRLAPGDoor<T extends APGDoorDRLBlockEntity> extends BlockEnti
         }
 
         @Override
+        public void render(net.minecraft.client.util.math.MatrixStack matrices, net.minecraft.client.render.VertexConsumer vertices, int light, int overlay, int color) {
+        }
+
+        @Override
         public void setAngles2(EntityAbstractMapping entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
         }
     }
@@ -168,6 +171,10 @@ public class RenderDRLAPGDoor<T extends APGDoorDRLBlockEntity> extends BlockEnti
         @Override
         public void render(GraphicsHolder graphicsHolder, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
             bone.render(graphicsHolder, 0, 0, 0, packedLight, packedOverlay);
+        }
+
+        @Override
+        public void render(net.minecraft.client.util.math.MatrixStack matrices, net.minecraft.client.render.VertexConsumer vertices, int light, int overlay, int color) {
         }
 
         @Override
